@@ -38,6 +38,10 @@ app.use(express.json());
  */
 app.use(morgan("dev"));
 
+app.get("/verify", (req, res, next) => {
+  authMiddleware(req, res, next, true);
+});
+
 app.post("/register", async (req, res) => {
   const { firstName, lastName, email, password } = req.body;
   const userDetails = await User.find({ email }).exec();

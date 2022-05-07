@@ -1,6 +1,6 @@
 const jwt = require("jsonwebtoken");
 
-const authMiddleware = (req, res, next) => {
+const authMiddleware = (req, res, next, sendDecoded = false) => {
   const authHeader = req.headers.jwt;
   if (authHeader) {
     jwt.verify(authHeader, process.env.JWT_SECRET, (err, decoded) => {
@@ -8,6 +8,9 @@ const authMiddleware = (req, res, next) => {
         return res.status(401).send("Unauthorized");
       } else {
         console.log(decoded);
+        if (sendDecoded) {
+          return res.send(decoded);
+        }
         next();
       }
     });

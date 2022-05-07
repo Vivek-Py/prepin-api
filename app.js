@@ -12,6 +12,7 @@ const createJWToken = require("./utils/createJWToken");
 require("dotenv").config();
 
 const app = express();
+const port = process.env.PORT || 9000;
 
 /*
  * Connect to MongoDB
@@ -24,7 +25,7 @@ mongoose
   })
   .then(() => {
     console.info("Succesfully connected to DB");
-    app.listen(9000);
+    app.listen(port);
   })
   .catch((err) => console.log(err));
 

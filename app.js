@@ -38,7 +38,7 @@ app.use(express.json());
  */
 app.use(morgan("dev"));
 
-app.post("/users/register", async (req, res) => {
+app.post("/register", async (req, res) => {
   const { firstName, lastName, email, password } = req.body;
   const userDetails = await User.find({ email }).exec();
   if (userDetails.length > 0) {
@@ -75,7 +75,7 @@ app.post("/users/register", async (req, res) => {
   }
 });
 
-app.post("/users/login", async (req, res) => {
+app.post("/login", async (req, res) => {
   const { email, password } = req.body;
   try {
     const userDetails = await User.find({ email }).exec();

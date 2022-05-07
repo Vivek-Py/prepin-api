@@ -1,0 +1,29 @@
+{
+  "dependencies": {
+    "bcrypt": "^5.0.1",
+    "dotenv": "^16.0.0",
+    "express": "^4.18.1",
+    "jsonwebtoken": "^8.5.1",
+    "lodash": "^4.17.21",
+    "mongoose": "^6.3.2",
+    "morgan": "^1.10.0",
+    "nodemon": "^2.0.16"
+  },
+  "scripts": {
+    "start": "nodemon app"
+  },
+  "name": "prepin-api",
+  "description": "",
+  "version": "1.0.0",
+  "main": "server.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Vivek-Py/prepin-api.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Vivek-Py/prepin-api/issues"
+  },
+  "homepage": "https://github.com/Vivek-Py/prepin-api#readme"
+}

@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "axios": "^0.27.2",
     "bcrypt": "^5.0.1",
     "cors": "^2.8.5",
     "dotenv": "^16.0.0",
@@ -8,7 +9,8 @@
     "lodash": "^4.17.21",
     "mongoose": "^6.3.2",
     "morgan": "^1.10.0",
-    "nodemon": "^2.0.16"
+    "nodemon": "^2.0.16",
+    "uuid": "^8.3.2"
   },
   "scripts": {
     "start": "nodemon app"

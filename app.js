@@ -1,4 +1,5 @@
 const express = require("express");
+const cors = require("cors");
 const morgan = require("morgan");
 const bcrypt = require("bcrypt");
 const mongoose = require("mongoose");
@@ -35,8 +36,10 @@ app.use(express.json());
 /*
  * Middleware to log all requests
  * authMiddleware is used to check if the user is logged in
+ * cors handling
  */
 app.use(morgan("dev"));
+app.use(cors());
 
 app.get("/verify", (req, res, next) => {
   authMiddleware(req, res, next, true);

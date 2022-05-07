@@ -36,7 +36,6 @@ app.use(express.json());
  * authMiddleware is used to check if the user is logged in
  */
 app.use(morgan("dev"));
-app.use(authMiddleware);
 
 app.post("/users/register", async (req, res) => {
   const { firstName, lastName, email, password } = req.body;
@@ -96,9 +95,8 @@ app.post("/users/login", async (req, res) => {
   }
 });
 
-/*
- // Get all user data
-  app.get("/users", (req, res) => {
+// Get all user data
+app.get("/users", authMiddleware, (req, res) => {
   User.find()
     .then((users) => users.map(userDataFilter))
     .then((users) => res.send(users))
@@ -107,9 +105,8 @@ app.post("/users/login", async (req, res) => {
       res.status(500).send("Internal server error.");
     });
 });
- */
 
-app.get("/users/:id", (req, res) => {
+app.get("/users/:id", authMiddleware, (req, res, next) => {
   User.findById(req.params.id)
     .then((user) => res.send(userDataFilter(user)))
     .catch((err) => {

@@ -119,8 +119,8 @@ app.get("/users/:id", authMiddleware, (req, res, next) => {
 // Handling request URLs
 app.get("/", (req, res) => {
   res.statusCode = 200;
-  res.setHeader("Content-Type", "plain/text");
-  res.send("PrepInTech API is live!");
+  res.setHeader("Content-Type", "text/html");
+  res.send("<h1>PrepInTech API is live!</h1>");
 });
 
 app.use((req, res) => {

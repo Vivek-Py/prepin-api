@@ -194,7 +194,7 @@ app.use((req, res) => {
   res.send("Resource doesn't exist");
 });
 
-const io = require("socket.io")(app, {
+/* const io = require("socket.io")(app, {
   handlePreflightRequest: (req, res) => {
     const headers = {
       "Access-Control-Allow-Headers": "Content-Type, Authorization",
@@ -231,3 +231,4 @@ async function findOrCreateDocument(id) {
   if (document) return document;
   return await Document.create({ _id: id, data: defaultValue });
 }
+ */

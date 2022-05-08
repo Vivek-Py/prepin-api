@@ -45,6 +45,8 @@ app.use(express.json());
 app.use(morgan("dev"));
 app.use(cors());
 
+app.post("/schedule", authMiddleware, (req, res) => {});
+
 app.get("/verify", (req, res, next) => {
   authMiddleware(req, res, next, true);
 });
@@ -78,7 +80,7 @@ app.get("/token", authMiddleware, async (req, res) => {
     const channelName = uuid.v4();
     axios
       .get(
-        `https://evening-cliffs-08459.herokuapp.com/rtm/${channelName}/${process.env.GO_SECRET}`
+        `https://prepintech-rtc.herokuapp.com/rtm/${channelName}/${process.env.GO_SECRET}`
       )
       .then((result) => {
         const { data } = result;

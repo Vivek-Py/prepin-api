@@ -7,6 +7,7 @@ const axios = require("axios");
 const uuid = require("uuid");
 
 const User = require("./models/user");
+const Channel = require("./models/channel");
 
 const authMiddleware = require("./middlewares/authMiddleware");
 const userDataFilter = require("./utils/userDataFilter");
@@ -47,19 +48,37 @@ app.get("/verify", (req, res, next) => {
   authMiddleware(req, res, next, true);
 });
 
-app.get("/token", authMiddleware, (req, res) => {
-  const channelName = uuid.v4();
-  axios
-    .get(
-      `https://evening-cliffs-08459.herokuapp.com/rtm/${channelName}/${process.env.GO_SECRET}`
-    )
-    .then((result) => {
-      res.send({ data: result.data, channelName });
-    })
-    .catch((error) => {
-      console.error(error);
-      res.status(500).send({ error: "Internal Server Error." });
-    });
+app.get("/token", authMiddleware, async (req, res) => {
+  const channels = await Channel.find();
+  if (channels.length > 0) {
+    const { token, channelName } = channels[0];
+    await Channel.findOneAndDelete({ token, channelName });
+    res.status(200).send({ token, channelName });
+  } else {
+    const channelName = uuid.v4();
+    axios
+      .get(
+        `https://evening-cliffs-08459.herokuapp.com/rtm/${channelName}/${process.env.GO_SECRET}`
+      )
+      .then((result) => {
+        const { data } = result;
+        const channel = new Channel({
+          token: data.rtmToken,
+          channelName,
+        });
+        channel
+          .save()
+          .then((response) => res.status(200).send(response))
+          .catch((err) => {
+            console.error(err);
+            res.status(500).send("Internal server error.");
+          });
+      })
+      .catch((error) => {
+        console.error(error);
+        res.status(500).send({ error: "Internal Server Error." });
+      });
+  }
 });
 
 app.post("/register", async (req, res) => {

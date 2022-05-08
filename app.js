@@ -25,6 +25,7 @@ const { Server } = require("socket.io");
 const io = new Server(server, {
   cors: {
     origin: ["https://prepintech-api.herokuapp.com"],
+    "Access-Control-Allow-Origin": "*",
   },
 });
 
@@ -80,45 +81,50 @@ app.patch("/users", authMiddleware, async (req, res) => {
 });
 
 app.get("/token", authMiddleware, async (req, res) => {
-  const channels = await Channel.find();
-  if (channels.length > 0) {
-    const { token, channelName } = channels[0];
-    await Channel.findOneAndDelete({ token, channelName });
-    res.status(200).send({ token, channelName });
-  } else {
-    const channelName = uuid.v4();
-    axios
-      .get(
-        `https://prepintech-rtc.herokuapp.com/rtm/${channelName}/${process.env.GO_SECRET}`
-      )
-      .then((result) => {
-        const { data } = result;
-        const channel = new Channel({
-          token: data.rtmToken,
-          channelName,
-        });
-        channel
-          .save()
-          .then((response) => res.status(200).send(response))
-          .catch((err) => {
-            console.error(err);
-            res.status(500).send("Internal server error.");
+  try {
+    const channels = await Channel.find();
+    if (channels.length > 0) {
+      const { token, channelName } = channels[0];
+      await Channel.findOneAndDelete({ token, channelName });
+      res.status(200).send({ token, channelName });
+    } else {
+      const channelName = uuid.v4();
+      axios
+        .get(
+          `https://prepintech-rtc.herokuapp.com/rtm/${channelName}/${process.env.GO_SECRET}`
+        )
+        .then((result) => {
+          const { data } = result;
+          const channel = new Channel({
+            token: data.rtmToken,
+            channelName,
           });
-      })
-      .catch((error) => {
-        console.error(error);
-        res.status(500).send({ error: "Internal Server Error." });
-      });
+          channel
+            .save()
+            .then((response) => res.status(200).send(response))
+            .catch((err) => {
+              console.error(err);
+              res.status(500).send("Internal server error.");
+            });
+        })
+        .catch((error) => {
+          console.error(error);
+          res.status(500).send({ error: "Internal Server Error." });
+        });
+    }
+  } catch (err) {
+    return res.status(500).send("Internal server error.");
   }
 });
 
 app.post("/register", async (req, res) => {
-  const { firstName, lastName, email, password } = req.body;
-  const userDetails = await User.find({ email }).exec();
-  if (userDetails.length > 0) {
-    return res.status(404).send("User already exists");
-  }
   try {
+    const { firstName, lastName, email, password } = req.body;
+    const userDetails = await User.find({ email }).exec();
+    if (userDetails.length > 0) {
+      return res.status(404).send("User already exists");
+    }
+
     // Hash the password to secure it from data breach
     const salt = await bcrypt.genSalt();
     const hashedPassword = await bcrypt.hash(password, salt);
@@ -150,8 +156,8 @@ app.post("/register", async (req, res) => {
 });
 
 app.post("/login", async (req, res) => {
-  const { email, password } = req.body;
   try {
+    const { email, password } = req.body;
     const userDetails = await User.find({ email }).exec();
     if (userDetails.length > 0) {
       if (await bcrypt.compare(password, userDetails[0].password)) {
@@ -172,22 +178,32 @@ app.post("/login", async (req, res) => {
 
 // Get all user data
 app.get("/users", authMiddleware, (req, res) => {
-  User.find()
-    .then((users) => users.map(userDataFilter))
-    .then((users) => res.send(users))
-    .catch((err) => {
-      console.error(err);
-      res.status(500).send("Internal server error.");
-    });
+  try {
+    User.find()
+      .then((users) => users.map(userDataFilter))
+      .then((users) => res.send(users))
+      .catch((err) => {
+        console.error(err);
+        res.status(500).send("Internal server error.");
+      });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Internal server error.");
+  }
 });
 
 app.get("/users/:id", authMiddleware, (req, res, next) => {
-  User.findById(req.params.id)
-    .then((user) => res.send(userDataFilter(user)))
-    .catch((err) => {
-      console.error(err);
-      res.status(500).send("Internal server error.");
-    });
+  try {
+    User.findById(req.params.id)
+      .then((user) => res.send(userDataFilter(user)))
+      .catch((err) => {
+        console.error(err);
+        res.status(500).send("Internal server error.");
+      });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Internal server error.");
+  }
 });
 
 // Handling request URLs
@@ -205,19 +221,24 @@ app.use((req, res) => {
 const defaultValue = "";
 
 io.on("connection", (socket) => {
-  socket.on("get-document", async (documentId) => {
-    const document = await findOrCreateDocument(documentId);
-    socket.join(documentId);
-    socket.emit("load-document", document.data);
+  try {
+    socket.on("get-document", async (documentId) => {
+      const document = await findOrCreateDocument(documentId);
+      socket.join(documentId);
+      socket.emit("load-document", document.data);
 
-    socket.on("send-changes", (delta) => {
-      socket.broadcast.to(documentId).emit("receive-changes", delta);
-    });
+      socket.on("send-changes", (delta) => {
+        socket.broadcast.to(documentId).emit("receive-changes", delta);
+      });
 
-    socket.on("save-document", async (data) => {
-      await Document.findByIdAndUpdate(documentId, { data });
+      socket.on("save-document", async (data) => {
+        await Document.findByIdAndUpdate(documentId, { data });
+      });
     });
-  });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Internal server error.");
+  }
 });
 
 async function findOrCreateDocument(id) {

@@ -47,7 +47,7 @@ app.get("/verify", (req, res, next) => {
   authMiddleware(req, res, next, true);
 });
 
-app.get("/token", (req, res) => {
+app.get("/token", authMiddleware, (req, res) => {
   const channelName = uuid.v4();
   axios
     .get(

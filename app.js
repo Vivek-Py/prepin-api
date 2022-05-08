@@ -103,11 +103,33 @@ app.post("/schedule", authMiddleware, (req, res) => {
 app.get("/schedule", authMiddleware, async (req, res) => {
   try {
     Interview.find({ available: true })
-    .populate("peerFirst", "_id firstName lastName bio tags")
+      .populate("peerFirst", "_id firstName lastName bio tags")
       .then((interviews) => {
         res.send(interviews);
       })
       .catch(() => res.status(404).send("Error fetching interviews"));
+  } catch (error) {
+    console.log(error);
+    res.status(500).send("Internal server error");
+  }
+});
+
+app.get("/schedule/user", authMiddleware, async (req, res) => {
+  try {
+    const token = req.headers.jwt;
+    jwt.verify(token, process.env.JWT_SECRET, async (err, decoded) => {
+      if (err) {
+        console.log(err);
+        res.status(404).json("Invalid token");
+      }
+      Interview.find({
+        $or: [{ peerFirst: decoded.id }, { peerSecond: decoded.id }],
+      })
+        .then((interviews) => {
+          res.send(interviews);
+        })
+        .catch(() => res.status(404).send("Error fetching user interviews"));
+    });
   } catch (error) {
     console.log(error);
     res.status(500).send("Internal server error");
@@ -128,7 +150,17 @@ app.patch("/schedule/:id", authMiddleware, async (req, res) => {
         { _id: id },
         { peerSecond: decoded.id, available: false }
       );
-      res.send("Interview scheduled");
+      try {
+        Interview.find({ available: true })
+          .populate("peerFirst", "_id firstName lastName bio tags")
+          .then((interviews) => {
+            res.send(interviews);
+          })
+          .catch(() => res.status(404).send("Error fetching interviews"));
+      } catch (error) {
+        console.log(error);
+        res.status(500).send("Internal server error");
+      }
     });
   } catch (error) {
     console.log(error);

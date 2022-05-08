@@ -1,3 +1,4 @@
+/* Library imports */
 const express = require("express");
 const cors = require("cors");
 const morgan = require("morgan");
@@ -8,16 +9,20 @@ const axios = require("axios");
 const uuid = require("uuid");
 const http = require("http");
 
+/* Model imports */
 const User = require("./models/user");
 const Channel = require("./models/channel");
 const Document = require("./models/document");
+const Interview = require("./models/interview");
 
+/* Utils imports */
 const authMiddleware = require("./middlewares/authMiddleware");
 const userDataFilter = require("./utils/userDataFilter");
 const createJWToken = require("./utils/createJWToken");
 
 require("dotenv").config();
 
+// Create express app and open socket.io
 const app = express();
 const port = process.env.PORT || 9000;
 const server = http.createServer(app);
@@ -55,12 +60,87 @@ app.use(express.json());
 app.use(morgan("dev"));
 app.use(cors());
 
-app.post("/schedule", authMiddleware, (req, res) => {});
+// POST requesting for scheduling an interview
+app.post("/schedule", authMiddleware, (req, res) => {
+  try {
+    const token = req.headers.jwt;
+    const { dateAndTime } = req.body;
+    jwt.verify(token, process.env.JWT_SECRET, async (err, decoded) => {
+      if (err) {
+        console.log(err);
+        res.status(404).json("Invalid token");
+      }
+      const channelName = uuid.v4();
+      axios
+        .get(
+          `https://prepintech-rtc.herokuapp.com/rtm/${channelName}/${process.env.GO_SECRET}`
+        )
+        .then(async (result) => {
+          const { data } = result;
+          const interview = new Interview({
+            dateAndTime,
+            peerFirst: decoded.id,
+            token: data.rtmToken,
+            channelName,
+          });
+          await interview
+            .save()
+            .then((result) => res.send(result))
+            .catch(() => res.status(404).send("Error scheduling interview"));
+        })
+        .catch((error) => {
+          console.error(error);
+          res.status(500).send({ error: "Internal Server Error." });
+        });
+    });
+  } catch (err) {
+    console.log(err);
+    res.status(500).send("Internal server error");
+  }
+});
 
+// GET request for getting all interviews
+app.get("/schedule", authMiddleware, async (req, res) => {
+  try {
+    Interview.find({ available: true })
+      .then((interviews) => {
+        res.send(interviews);
+      })
+      .catch(() => res.status(404).send("Error fetching interviews"));
+  } catch (error) {
+    console.log(error);
+    res.status(500).send("Internal server error");
+  }
+});
+
+// PATCH request for updating a interview
+app.patch("/schedule/:id", authMiddleware, async (req, res) => {
+  try {
+    const token = req.headers.jwt;
+    const { id } = req.params;
+    jwt.verify(token, process.env.JWT_SECRET, async (err, decoded) => {
+      if (err) {
+        console.log(err);
+        res.status(404).json("Invalid token");
+      }
+      await Interview.findOneAndUpdate(
+        { _id: id },
+        { peerSecond: decoded.id, available: false }
+      );
+      res.send("Interview scheduled");
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).send("Internal server error");
+  }
+});
+
+/* Verify user JWT */
 app.get("/verify", (req, res, next) => {
   authMiddleware(req, res, next, true);
 });
 
+/* PATCH request to update user data */
 app.patch("/users", authMiddleware, async (req, res) => {
   try {
     const token = req.headers.jwt;
@@ -80,7 +160,8 @@ app.patch("/users", authMiddleware, async (req, res) => {
   }
 });
 
-app.get("/token", authMiddleware, async (req, res) => {
+/* GET request to dynamically generate token from GO server */
+app.get("/token", authMiddleware, async (req, res, next) => {
   try {
     const channels = await Channel.find();
     if (channels.length > 0) {

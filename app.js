@@ -6,6 +6,7 @@ const jwt = require("jsonwebtoken");
 const mongoose = require("mongoose");
 const axios = require("axios");
 const uuid = require("uuid");
+const http = require("http");
 
 const User = require("./models/user");
 const Channel = require("./models/channel");
@@ -19,6 +20,13 @@ require("dotenv").config();
 
 const app = express();
 const port = process.env.PORT || 9000;
+const server = http.createServer(app);
+const { Server } = require("socket.io");
+const io = new Server(server, {
+  cors: {
+    origin: "*",
+  },
+});
 
 /*
  * Connect to MongoDB
@@ -31,7 +39,7 @@ mongoose
   })
   .then(() => {
     console.info("Succesfully connected to DB");
-    app.listen(port);
+    server.listen(port);
   })
   .catch((err) => console.log(err));
 
@@ -194,18 +202,6 @@ app.use((req, res) => {
   res.send("Resource doesn't exist");
 });
 
-/* const io = require("socket.io")(app, {
-  handlePreflightRequest: (req, res) => {
-    const headers = {
-      "Access-Control-Allow-Headers": "Content-Type, Authorization",
-      "Access-Control-Allow-Origin": req.headers.origin, //or the specific origin you want to give access to,
-      "Access-Control-Allow-Credentials": true,
-    };
-    res.writeHead(200, headers);
-    res.end();
-  },
-});
-
 const defaultValue = "";
 
 io.on("connection", (socket) => {
@@ -231,4 +227,3 @@ async function findOrCreateDocument(id) {
   if (document) return document;
   return await Document.create({ _id: id, data: defaultValue });
 }
- */

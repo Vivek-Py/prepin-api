@@ -2,6 +2,7 @@ const express = require("express");
 const cors = require("cors");
 const morgan = require("morgan");
 const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
 const mongoose = require("mongoose");
 const axios = require("axios");
 const uuid = require("uuid");
@@ -48,16 +49,19 @@ app.get("/verify", (req, res, next) => {
   authMiddleware(req, res, next, true);
 });
 
-app.patch("/users/:id", async (req, res) => {
+app.patch("/users", authMiddleware, async (req, res) => {
   try {
-    await User.findOneAndUpdate({ _id: req.params.id }, req.body);
+    const token = req.headers.jwt;
+    jwt.verify(token, process.env.JWT_SECRET, async (err, decoded) => {
+      await User.findOneAndUpdate({ _id: decoded?.id }, req.body);
 
-    User.findById(req.params.id)
-      .then((user) => res.send(userDataFilter(user)))
-      .catch((err) => {
-        console.error(err);
-        res.status(500).send("Internal server error.");
-      });
+      User.findById(decoded?.id)
+        .then((user) => res.send(userDataFilter(user)))
+        .catch((err) => {
+          console.error(err);
+          res.status(500).send("Internal server error.");
+        });
+    });
   } catch (err) {
     console.error(err);
     res.status(500).send("Internal server error.");

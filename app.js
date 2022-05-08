@@ -128,7 +128,17 @@ app.patch("/schedule/:id", authMiddleware, async (req, res) => {
         { _id: id },
         { peerSecond: decoded.id, available: false }
       );
-      res.send("Interview scheduled");
+      try {
+        Interview.find({ available: true })
+        .populate("peerFirst", "_id firstName lastName bio tags")
+          .then((interviews) => {
+            res.send(interviews);
+          })
+          .catch(() => res.status(404).send("Error fetching interviews"));
+      } catch (error) {
+        console.log(error);
+        res.status(500).send("Internal server error");
+      }
     });
   } catch (error) {
     console.log(error);

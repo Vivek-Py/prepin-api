@@ -166,9 +166,9 @@ app.post("/login", async (req, res) => {
           jwt: createJWToken(user),
           userData: user,
         });
-      } else res.send("Password/Email is incorrect");
+      } else res.status(401).send("Password/Email is incorrect");
     } else {
-      return res.status(404).send("Password/Email is incorrect");
+      return res.status(401).send("Password/Email is incorrect");
     }
   } catch (err) {
     console.error(err);

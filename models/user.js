@@ -37,6 +37,11 @@ const userSchema = new Schema(
       required: false,
       default: 0,
     },
+    tags: {
+      type: [String],
+      required: false,
+      default: [],
+    },
   },
   { timestamps: true }
 );

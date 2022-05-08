@@ -9,6 +9,7 @@ const userDataFilter = (result) => {
     "bio",
     "image",
     "sessionsAttended",
+    "tags",
   ]);
 };
 

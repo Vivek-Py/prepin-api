@@ -103,7 +103,7 @@ app.post("/schedule", authMiddleware, (req, res) => {
 app.get("/schedule", authMiddleware, async (req, res) => {
   try {
     Interview.find({ available: true })
-    .populate("peerFirst", "_id firstName ")
+    .populate("peerFirst", "_id firstName lastName bio tags")
       .then((interviews) => {
         res.send(interviews);
       })

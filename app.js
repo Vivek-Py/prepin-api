@@ -48,6 +48,22 @@ app.get("/verify", (req, res, next) => {
   authMiddleware(req, res, next, true);
 });
 
+app.patch("/users/:id", async (req, res) => {
+  try {
+    await User.findOneAndUpdate({ _id: req.params.id }, req.body);
+
+    User.findById(req.params.id)
+      .then((user) => res.send(userDataFilter(user)))
+      .catch((err) => {
+        console.error(err);
+        res.status(500).send("Internal server error.");
+      });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Internal server error.");
+  }
+});
+
 app.get("/token", authMiddleware, async (req, res) => {
   const channels = await Channel.find();
   if (channels.length > 0) {

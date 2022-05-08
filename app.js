@@ -3,6 +3,8 @@ const cors = require("cors");
 const morgan = require("morgan");
 const bcrypt = require("bcrypt");
 const mongoose = require("mongoose");
+const axios = require("axios");
+const uuid = require("uuid");
 
 const User = require("./models/user");
 
@@ -43,6 +45,21 @@ app.use(cors());
 
 app.get("/verify", (req, res, next) => {
   authMiddleware(req, res, next, true);
+});
+
+app.get("/token", authMiddleware, (req, res) => {
+  const channelName = uuid.v4();
+  axios
+    .get(
+      `https://evening-cliffs-08459.herokuapp.com/rtm/${channelName}/${process.env.GO_SECRET}`
+    )
+    .then((result) => {
+      res.send({ data: result.data, channelName });
+    })
+    .catch((error) => {
+      console.error(error);
+      res.status(500).send({ error: "Internal Server Error." });
+    });
 });
 
 app.post("/register", async (req, res) => {

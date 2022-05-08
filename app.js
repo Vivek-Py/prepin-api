@@ -194,12 +194,7 @@ app.use((req, res) => {
   res.send("Resource doesn't exist");
 });
 
-const io = require("socket.io")(process.env.PORT || 3001, {
-  cors: {
-    origin: "*",
-    methods: ["GET", "POST"],
-  },
-});
+const io = require("socket.io")(process.env.PORT || 3001);
 
 const defaultValue = "";
 
